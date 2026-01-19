@@ -1,79 +1,71 @@
-const canvas = document.getElementById("scratch");
+const canvas = document.getElementById("scratchCanvas");
 const ctx = canvas.getContext("2d");
-const btn = document.getElementById("confettiBtn");
 
-canvas.width = 360;
-canvas.height = 330;
+let isScratching = false;
 
-// CAPA DE RASCAR
-ctx.fillStyle = "#ffe1ec";
+// Ajustar tamaño
+canvas.width = canvas.offsetWidth;
+canvas.height = canvas.offsetHeight;
+
+// Capa gris de rascar
+ctx.fillStyle = "#c0c0c0";
 ctx.fillRect(0, 0, canvas.width, canvas.height);
 ctx.globalCompositeOperation = "destination-out";
 
-let drawing = false;
-let buttonShown = false;
-
-function getPos(e) {
-  const rect = canvas.getBoundingClientRect();
-  return {
-    x: (e.touches ? e.touches[0].clientX : e.clientX) - rect.left,
-    y: (e.touches ? e.touches[0].clientY : e.clientY) - rect.top
-  };
-}
-
-function scratch(e) {
-  if (!drawing) return;
-  const { x, y } = getPos(e);
-
-  ctx.beginPath();
-  ctx.arc(x, y, 28, 0, Math.PI * 2);
-  ctx.fill();
-
-  checkProgress();
-}
-
-function checkProgress() {
-  const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-  let cleared = 0;
-
-  for (let i = 3; i < data.length; i += 4) {
-    if (data[i] === 0) cleared++;
-  }
-
-  // 🔑 AQUÍ SALE EL BOTÓN SÍ O SÍ
-  if (cleared > data.length * 0.18 && !buttonShown) {
-    buttonShown = true;
-    btn.classList.add("show");
-  }
-}
-
-canvas.addEventListener("mousedown", () => drawing = true);
-canvas.addEventListener("mouseup", () => drawing = false);
+// Eventos ratón
+canvas.addEventListener("mousedown", () => isScratching = true);
+canvas.addEventListener("mouseup", () => isScratching = false);
 canvas.addEventListener("mousemove", scratch);
 
-canvas.addEventListener("touchstart", () => drawing = true);
-canvas.addEventListener("touchend", () => drawing = false);
+// Eventos móvil
+canvas.addEventListener("touchstart", () => isScratching = true);
+canvas.addEventListener("touchend", () => isScratching = false);
 canvas.addEventListener("touchmove", scratch);
 
-// 🎉 CONFETI DESDE EL BOTÓN
-btn.addEventListener("click", (e) => {
-  const rect = e.target.getBoundingClientRect();
-  const x0 = rect.left + rect.width / 2;
-  const y0 = rect.top + rect.height / 2;
+function scratch(e) {
+  if (!isScratching) return;
 
-  for (let i = 0; i < 180; i++) {
-    const c = document.createElement("div");
-    c.className = "confetti";
-    c.textContent = Math.random() > 0.5 ? "🍓" : "💖";
+  const rect = canvas.getBoundingClientRect();
+  let x, y;
 
-    c.style.left = x0 + "px";
-    c.style.top = y0 + "px";
-    c.style.fontSize = Math.random() * 14 + 14 + "px";
+  if (e.touches) {
+    x = e.touches[0].clientX - rect.left;
+    y = e.touches[0].clientY - rect.top;
+  } else {
+    x = e.clientX - rect.left;
+    y = e.clientY - rect.top;
+  }
 
-    c.style.setProperty("--x", `${Math.random() * 500 - 250}px`);
-    c.style.setProperty("--y", `${Math.random() * 500 - 250}px`);
+  ctx.beginPath();
+  ctx.arc(x, y, 20, 0, Math.PI * 2);
+  ctx.fill();
+}
 
-    document.body.appendChild(c);
-    setTimeout(() => c.remove(), 1600);
+// CONFETI
+document.getElementById("confettiBtn").addEventListener("click", () => {
+  for (let i = 0; i < 100; i++) {
+    const confeti = document.createElement("div");
+    confeti.style.position = "fixed";
+    confeti.style.left = Math.random() * window.innerWidth + "px";
+    confeti.style.top = "-10px";
+    confeti.style.width = "10px";
+    confeti.style.height = "10px";
+    confeti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 70%)`;
+    confeti.style.borderRadius = "50%";
+    confeti.style.zIndex = "9999";
+    document.body.appendChild(confeti);
+
+    const fall = confeti.animate(
+      [
+        { transform: "translateY(0px)" },
+        { transform: `translateY(${window.innerHeight + 20}px)` }
+      ],
+      {
+        duration: 2000 + Math.random() * 2000,
+        easing: "ease-in"
+      }
+    );
+
+    fall.onfinish = () => confeti.remove();
   }
 });
