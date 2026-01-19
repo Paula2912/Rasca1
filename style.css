@@ -7,6 +7,12 @@
   z-index: 5; /* MUY IMPORTANTE */
 }
 
+.prize {
+  position: relative;
+  z-index: 1;
+}
+
+
 body {
   margin: 0;
   height: 100vh;
@@ -131,4 +137,5 @@ button:hover {
     opacity: 0;
   }
 }
+
 
